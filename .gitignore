@@ -87,6 +87,12 @@ crashlytics-build.properties
 # TestRunner generated files
 InitTestScene*.unity*
 
+# Ignore Kenney asset source folders to save Git/LFS space
+Assets/kenney_city-kit-commercial_2.1/
+Assets/kenney_city-kit-roads/
+Assets/kenney_city-kit-suburban_20/
+*.zip
+
 # Addressables default ignores, before user customizations
 /ServerData
 /[Aa]ssets/StreamingAssets/aa*
