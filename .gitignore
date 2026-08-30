@@ -111,3 +111,6 @@ Assets/kenney_city-kit-suburban_20/
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Unity crash/auto-recovery scenes
+/[Aa]ssets/_Recovery/
