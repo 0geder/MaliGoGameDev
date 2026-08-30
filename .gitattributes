@@ -149,6 +149,9 @@ Packages/packages-lock.json linguist-generated
 *.skel.bytes            lfs
 # Exceptions for .asset files such as lightning pre-baking
 LightingData.asset     binary
+# Third-party Kenney asset packs: store as regular git blobs, not LFS
+# (free downloadable art, keeps them off the Git LFS storage/bandwidth budget)
+Assets/kenney_*/** -filter -diff -merge -text
 Assets/kenney_*/** !text !filter !merge !diff
 *.png !text !filter !merge !diff
 *.pdf !text !filter !merge !diff
