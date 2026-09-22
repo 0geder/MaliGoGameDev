@@ -157,4 +157,6 @@ LightingData.asset     binary
 Assets/kenney_*/** -filter -diff -merge -text
 Assets/kenney_*/** !text !filter !merge !diff
 *.png !text !filter !merge !diff
+# Research papers: regular git blobs too, same reason (LFS storage/bandwidth budget
+# exhausted on this account - see the *.png note above, same constraint applies here).
 *.pdf !text !filter !merge !diff
