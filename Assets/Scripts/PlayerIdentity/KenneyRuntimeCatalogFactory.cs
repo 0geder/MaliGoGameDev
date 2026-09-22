@@ -9,6 +9,8 @@ namespace MaliGo.PlayerIdentity
     {
         const string KenneyRoot = "Assets/kenney_animated-characters-protagonists";
         const string ModelPath = KenneyRoot + "/Model/characterMedium.fbx";
+        const string IdleClipPath = KenneyRoot + "/Animations/idle.fbx";
+        const string RunClipPath = KenneyRoot + "/Animations/run.fbx";
         const string AnimatorPath = "Assets/MaliGo/Characters/PlayerCharacterAnimator.controller";
         const string MaterialPath = "Assets/MaliGo/Characters/PlayerSkinMaterial.mat";
 
@@ -32,7 +34,7 @@ namespace MaliGo.PlayerIdentity
         {
             var catalog = ScriptableObject.CreateInstance<PlayerCharacterCatalog>();
             catalog.characterModelPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath);
-            catalog.animatorController = UnityEditor.AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(AnimatorPath);
+            catalog.animatorController = LoadOrCreateAnimatorController();
             catalog.baseSkinMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
 
             if (catalog.baseSkinMaterial == null)
@@ -59,6 +61,72 @@ namespace MaliGo.PlayerIdentity
                 optionId = id,
                 skinTexture = UnityEditor.AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath)
             };
+        }
+
+        /// <summary>
+        /// The Kenney pack ships the rig (characterMedium.fbx) and its animations (idle.fbx, run.fbx)
+        /// as separate files sharing one skeleton - Unity's standard multi-FBX Generic rig workflow.
+        /// No PlayerCharacterAnimator.controller ships with the project, so this builds one the first
+        /// time it's needed and reuses it afterwards.
+        /// </summary>
+        static RuntimeAnimatorController LoadOrCreateAnimatorController()
+        {
+            var existing = UnityEditor.AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(AnimatorPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            AnimationClip idleClip = LoadFirstAnimationClip(IdleClipPath);
+            AnimationClip runClip = LoadFirstAnimationClip(RunClipPath);
+
+            if (idleClip == null && runClip == null)
+            {
+                Debug.LogWarning("[KenneyRuntimeCatalogFactory] No idle/run animation clips found - PlayerCharacterAnimator.controller was not created.");
+                return null;
+            }
+
+            var controller = UnityEditor.Animations.AnimatorController.CreateAnimatorControllerAtPath(AnimatorPath);
+            controller.AddParameter("Speed", AnimatorControllerParameterType.Float);
+
+            UnityEditor.Animations.AnimatorStateMachine stateMachine = controller.layers[0].stateMachine;
+
+            UnityEditor.Animations.AnimatorState idleState = stateMachine.AddState("Idle");
+            idleState.motion = idleClip;
+
+            UnityEditor.Animations.AnimatorState runState = stateMachine.AddState("Run");
+            runState.motion = runClip != null ? runClip : idleClip;
+
+            stateMachine.defaultState = idleState;
+
+            UnityEditor.Animations.AnimatorStateTransition idleToRun = idleState.AddTransition(runState);
+            idleToRun.hasExitTime = false;
+            idleToRun.duration = 0.15f;
+            idleToRun.AddCondition(UnityEditor.Animations.AnimatorConditionMode.Greater, 0.15f, "Speed");
+
+            UnityEditor.Animations.AnimatorStateTransition runToIdle = runState.AddTransition(idleState);
+            runToIdle.hasExitTime = false;
+            runToIdle.duration = 0.15f;
+            runToIdle.AddCondition(UnityEditor.Animations.AnimatorConditionMode.Less, 0.15f, "Speed");
+
+            UnityEditor.EditorUtility.SetDirty(controller);
+            UnityEditor.AssetDatabase.SaveAssets();
+
+            return controller;
+        }
+
+        static AnimationClip LoadFirstAnimationClip(string assetPath)
+        {
+            UnityEngine.Object[] assets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetPath);
+            foreach (UnityEngine.Object asset in assets)
+            {
+                if (asset is AnimationClip clip && !clip.name.StartsWith("__preview__"))
+                {
+                    return clip;
+                }
+            }
+
+            return null;
         }
 #endif
     }

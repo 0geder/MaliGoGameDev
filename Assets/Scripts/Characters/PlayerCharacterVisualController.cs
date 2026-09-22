@@ -37,7 +37,7 @@ namespace MaliGo.Characters
 
         public void UpdateVisual(Vector2 input, bool isMoving, Vector3 worldVelocity)
         {
-            if (animator == null)
+            if (animator == null || animator.runtimeAnimatorController == null)
             {
                 return;
             }

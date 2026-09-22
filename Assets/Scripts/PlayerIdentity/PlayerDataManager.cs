@@ -98,6 +98,7 @@ namespace MaliGo.PlayerIdentity
                 loaded.financialStats ??= new FinancialStats();
                 loaded.progression ??= new ProgressionData();
                 loaded.goals ??= Array.Empty<FinancialGoal>();
+                loaded.completedScenarioIds ??= Array.Empty<string>();
 
                 currentPlayer = loaded;
                 NotifyChanged();

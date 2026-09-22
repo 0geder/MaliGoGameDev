@@ -14,6 +14,14 @@ namespace MaliGo.Data
         public float expenses;
         public float savingsRate;
         public float financialXP;
+        public float energy = 100f;
+
+        /// <summary>
+        /// Gradually-updated behaviour signals in [0, 1], derived from gameplay decisions
+        /// (not the character-creation questionnaire). 0 = frugal/consistent, 1 = discretionary/rarely.
+        /// </summary>
+        public float spendingBehaviourScore = 0.5f;
+        public float savingBehaviourScore = 0.5f;
 
         public static FinancialStats CreateDefaults(LifeChapter chapter)
         {

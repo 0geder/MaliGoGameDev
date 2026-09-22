@@ -132,16 +132,14 @@ public class MaliGoPlayerController : MonoBehaviour
             }
 #endif
             // Fallback to legacy axes if no new input system event detected
+#if ENABLE_LEGACY_INPUT_MANAGER
             if (input == Vector2.zero)
             {
-                try
-                {
-                    float h = Input.GetAxisRaw("Horizontal");
-                    float v = Input.GetAxisRaw("Vertical");
-                    input += new Vector2(h, v);
-                }
-                catch { }
+                float h = Input.GetAxisRaw("Horizontal");
+                float v = Input.GetAxisRaw("Vertical");
+                input += new Vector2(h, v);
             }
+#endif
         }
 
         // Add virtual mobile joystick input if provided

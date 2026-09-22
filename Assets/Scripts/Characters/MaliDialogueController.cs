@@ -56,8 +56,32 @@ namespace MaliGo.Characters
 
         public void ShowGreeting()
         {
+            var player = PlayerIdentity.PlayerDataAccess.GetCurrentPlayer();
+            var entry = Dialogue.MaliContextualDialogueSelector.SelectLine(player);
             string name = PlayerIdentity.PlayerDataAccess.GetCharacterName();
-            ShowFormatted("Hey, {0}! Ready to see what today has in store?", name);
+
+            if (entry == null)
+            {
+                ShowFormatted("Hey, {0}! Ready to see what today has in store?", name);
+                return;
+            }
+
+            ShowFormatted(entry.line, name);
+
+            if (entry.triggerType == Dialogue.MaliDialogueTriggerType.FirstMeeting)
+            {
+                MarkMetMali();
+            }
+        }
+
+        static void MarkMetMali()
+        {
+            if (PlayerIdentity.PlayerDataManager.Instance == null)
+            {
+                return;
+            }
+
+            PlayerIdentity.PlayerDataManager.Instance.UpdatePlayerData(data => data.hasMetMali = true, saveImmediately: true);
         }
 
         public void Hide()
@@ -67,7 +91,10 @@ namespace MaliGo.Characters
 
             if (maliController != null && maliController.CurrentState == MaliBehaviourState.TALK)
             {
-                maliController.SetBehaviourState(MaliBehaviourState.IDLE);
+                MaliBehaviourState resumeState = maliController.FollowPlayerEnabled
+                    ? MaliBehaviourState.FOLLOW
+                    : MaliBehaviourState.IDLE;
+                maliController.SetBehaviourState(resumeState);
             }
 
             OnDialogueHidden?.Invoke();

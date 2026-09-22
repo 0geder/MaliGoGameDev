@@ -13,6 +13,8 @@ namespace MaliGo.Data
         public FinancialGoal[] goals = Array.Empty<FinancialGoal>();
         public ProgressionData progression = new ProgressionData();
         public bool isCharacterCreated;
+        public string[] completedScenarioIds = Array.Empty<string>();
+        public bool hasMetMali;
 
         public static PlayerData CreateNew()
         {

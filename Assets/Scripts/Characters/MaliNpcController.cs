@@ -11,15 +11,17 @@ namespace MaliGo.Characters
         [SerializeField] MaliBehaviourState behaviourState = MaliBehaviourState.IDLE;
 
         [Header("Follow Settings")]
+        // Distances scaled by ~0.27 (MaliGoWorld's measured units-per-metre; see
+        // PlayerCharacterSpawner.ControllerHeight) to match the corrected world/character scale.
         [SerializeField] bool followPlayer;
-        [SerializeField] float followDistance = 2.5f;
-        [SerializeField] float stopDistance = 1.35f;
+        [SerializeField] float followDistance = 0.68f;
+        [SerializeField] float stopDistance = 0.36f;
         [SerializeField] float followSpeed = 3.2f;
-        [SerializeField] Vector3 followOffset = new Vector3(1.2f, 0f, -0.8f);
+        [SerializeField] Vector3 followOffset = new Vector3(0.32f, 0f, -0.22f);
 
         [Header("Companion Limits")]
-        [SerializeField] float lookAtRange = 8f;
-        [SerializeField] float maxCompanionDistance = 12f;
+        [SerializeField] float lookAtRange = 2.16f;
+        [SerializeField] float maxCompanionDistance = 3.24f;
 
         [Header("Visual")]
         [SerializeField] CharacterSpriteController spriteController;

@@ -8,7 +8,7 @@ namespace MaliGo.Characters
     public class MaliCompanionInteraction : MonoBehaviour
     {
         [Header("Interaction")]
-        [SerializeField] float interactionRadius = 2.75f;
+        [SerializeField] float interactionRadius = 0.74f;
         [SerializeField] KeyCode interactKey = KeyCode.E;
 
         [Header("References")]
@@ -93,7 +93,16 @@ namespace MaliGo.Characters
 
         void HandleInteractionInput()
         {
-            if (dialogueController == null || !WasInteractPressed())
+            if (dialogueController == null)
+            {
+                return;
+            }
+
+            // Establish eligibility BEFORE asking, because WasInteractPressed() consumes the
+            // shared mobile interact request. Polling it while the player is nowhere near Mali
+            // swallowed every ACT press meant for a shop, a building or a scenario trigger.
+            bool canAct = dialogueController.IsShowingDialogue || IsPlayerInRange();
+            if (!canAct || !WasInteractPressed())
             {
                 return;
             }
@@ -104,17 +113,17 @@ namespace MaliGo.Characters
                 return;
             }
 
-            if (!IsPlayerInRange())
-            {
-                return;
-            }
-
             dialogueController.ShowGreeting();
             maliController?.LookTowardPlayer();
         }
 
         bool WasInteractPressed()
         {
+            if (UI.MobileInputBridge.ConsumeInteractRequest())
+            {
+                return true;
+            }
+
 #if ENABLE_INPUT_SYSTEM
             if (UnityEngine.InputSystem.Keyboard.current != null &&
                 UnityEngine.InputSystem.Keyboard.current.eKey.wasPressedThisFrame)
@@ -122,14 +131,11 @@ namespace MaliGo.Characters
                 return true;
             }
 #endif
-            try
-            {
-                return Input.GetKeyDown(interactKey);
-            }
-            catch
-            {
-                return false;
-            }
+#if ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKeyDown(interactKey);
+#else
+            return false;
+#endif
         }
 
         void HandleDialogueHidden()

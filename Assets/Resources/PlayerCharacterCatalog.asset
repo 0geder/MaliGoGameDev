@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6589da11768b5ac408b45d6359c8875c, type: 3}
+  m_Name: PlayerCharacterCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::MaliGo.PlayerIdentity.PlayerCharacterCatalog
+  characterModelPrefab: {fileID: 919132149155446097, guid: 92bb7effe5eb79c4b8dc288e08cbde45, type: 3}
+  animatorController: {fileID: 9100000, guid: c2e97675e9ca514479df38d662854b89, type: 2}
+  baseSkinMaterial: {fileID: 2100000, guid: 4f92e927e9b6c644bb051e50935c86f0, type: 2}
+  skinOptions:
+  - optionId: skater_male
+    skinTexture: {fileID: 2800000, guid: 547b5aa12a6b5f549b01e06ab1014d75, type: 3}
+  - optionId: skater_female
+    skinTexture: {fileID: 2800000, guid: c7aab88442ceb2e4db833a2680800384, type: 3}
+  - optionId: criminal_male
+    skinTexture: {fileID: 2800000, guid: d26cece74872ac040841c10cdf7d9272, type: 3}
+  - optionId: cyborg_female
+    skinTexture: {fileID: 2800000, guid: adfd0d978518360459d885646be7cc00, type: 3}

@@ -76,11 +76,9 @@ public class MaliGoCameraController : MonoBehaviour
 #endif
         if (Mathf.Abs(scroll) < 0.001f)
         {
-            try
-            {
-                scroll = Input.GetAxis("Mouse ScrollWheel");
-            }
-            catch { }
+#if ENABLE_LEGACY_INPUT_MANAGER
+            scroll = Input.GetAxis("Mouse ScrollWheel");
+#endif
         }
 
         if (Mathf.Abs(scroll) > 0.001f)

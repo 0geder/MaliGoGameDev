@@ -8,9 +8,8 @@ namespace MaliGo.Characters
     /// </summary>
     public class MaliDialogueView : MonoBehaviour
     {
-        static readonly Color MossGreen = new Color(0.031f, 0.478f, 0.094f, 0.94f);
-        static readonly Color Cream = new Color(0.976f, 1.000f, 0.965f);
-        static readonly Color Sage = new Color(0.788f, 0.937f, 0.706f);
+        static readonly Color DeepForest = new Color(0.059f, 0.369f, 0.180f);
+        static readonly Color DarkBrown = new Color(0.33f, 0.22f, 0.12f);
 
         Canvas canvas;
         GameObject panelRoot;
@@ -52,15 +51,24 @@ namespace MaliGo.Characters
             panelRect.sizeDelta = new Vector2(760f, 140f);
 
             var panelImage = panelRoot.AddComponent<Image>();
-            panelImage.color = MossGreen;
+            Sprite panelSprite = UI.KenneyUiSprites.PanelWarm;
+            if (panelSprite != null)
+            {
+                panelImage.sprite = panelSprite;
+                panelImage.type = Image.Type.Sliced;
+            }
+            else
+            {
+                panelImage.color = DeepForest;
+            }
 
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")
                         ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-            speakerText = CreateText(panelRoot.transform, "Speaker", new Vector2(20f, -16f), new Vector2(720f, 28f), 18, Sage, FontStyle.Bold, font);
+            speakerText = CreateText(panelRoot.transform, "Speaker", new Vector2(28f, -18f), new Vector2(704f, 28f), 18, DeepForest, FontStyle.Bold, font);
             speakerText.text = "Mali";
 
-            bodyText = CreateText(panelRoot.transform, "Body", new Vector2(20f, -48f), new Vector2(720f, 72f), 22, Cream, FontStyle.Normal, font);
+            bodyText = CreateText(panelRoot.transform, "Body", new Vector2(28f, -50f), new Vector2(704f, 68f), 22, DarkBrown, FontStyle.Normal, font);
         }
 
         static Text CreateText(Transform parent, string name, Vector2 pos, Vector2 size, int fontSize, Color color, FontStyle style, Font font)

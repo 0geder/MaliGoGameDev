@@ -21,6 +21,7 @@ public class MaliGoWorldGenerator
     private const string RoadPath = "Assets/kenney_city-kit-roads/Models/FBX format/";
     private const string SuburbanPath = "Assets/kenney_city-kit-suburban_20/Models/FBX format/";
     private const string CommercialPath = "Assets/kenney_city-kit-commercial_2.1/Models/FBX format/";
+    private const string CarPath = "Assets/kenney_car-kit/Models/FBX format/";
 
     [MenuItem("MaliGo/Generate MaliGo World Scene")]
     public static void GenerateScene()
@@ -312,6 +313,153 @@ public class MaliGoWorldGenerator
         Debug.Log("🎉 MaliGoWorld scene successfully generated and saved to " + scenePath);
     }
 
+    /// <summary>
+    /// Measured via MaliGoScaleAudit: Car Kit's sedan.fbx imports at (1.5 x 1.3 x 2.55) -
+    /// nearly twice as long as Player_House is wide (1.3). Car Kit does NOT share City Kit's
+    /// scale. This factor brings a car to roughly car-height-vs-house-height proportions
+    /// (~0.4 units tall, about half the house's 0.834-unit height).
+    /// </summary>
+    private const float VehicleScale = 0.31f;
+
+    /// <summary>
+    /// Adds parked/roadside vehicles to the already-built MaliGoWorld scene. Purely additive -
+    /// unlike GenerateScene() this does not clear or rebuild anything, so it's safe to run
+    /// against a scene that already has manual tweaks. Re-running is safe: if a "Vehicles"
+    /// group already exists, it re-applies VehicleScale to the existing cars instead of
+    /// duplicating them - use this to pick up a corrected VehicleScale value.
+    /// </summary>
+    [MenuItem("MaliGo/World/Add Parked Vehicles")]
+    public static void AddParkedVehicles()
+    {
+        Scene activeScene = EditorSceneManager.GetActiveScene();
+        if (activeScene.name != "MaliGoWorld")
+        {
+            Debug.LogWarning("[MaliGoWorldGenerator] Open MaliGoWorld.unity before running Add Parked Vehicles.");
+            return;
+        }
+
+        GameObject vehiclesRoot = GameObject.Find("Vehicles");
+        if (vehiclesRoot != null)
+        {
+            ApplyVehicleScale(vehiclesRoot);
+            EditorSceneManager.MarkSceneDirty(activeScene);
+            EditorSceneManager.SaveScene(activeScene);
+            Debug.Log($"[MaliGoWorldGenerator] 'Vehicles' already existed - rescaled existing cars to x{VehicleScale} and saved.");
+            return;
+        }
+
+        GameObject envRoot = GameObject.Find("--- ENVIRONMENT ---");
+        if (envRoot == null)
+        {
+            Debug.LogWarning("[MaliGoWorldGenerator] '--- ENVIRONMENT ---' not found - run 'Generate MaliGo World Scene' first.");
+            return;
+        }
+
+        vehiclesRoot = new GameObject("Vehicles");
+        vehiclesRoot.transform.SetParent(envRoot.transform);
+
+        // Player's own car, in their driveway (Road_Player_Driveway is at x=2, house at z=-2.2)
+        SpawnModel(CarPath + "sedan.fbx", new Vector3(2.0f, 0f, -0.6f), Quaternion.Euler(0, 0, 0), vehiclesRoot.transform, "Vehicle_PlayerCar");
+
+        // Neighbor's car, in their driveway (Road_Neighbor_Driveway is at x=-4)
+        SpawnModel(CarPath + "suv.fbx", new Vector3(-4.0f, 0f, -0.6f), Quaternion.Euler(0, 0, 0), vehiclesRoot.transform, "Vehicle_NeighborSUV");
+
+        // A couple of cars along the main east-west road (avoiding the intersection/crossing/driveway tiles)
+        SpawnModel(CarPath + "hatchback-sports.fbx", new Vector3(-3.0f, 0f, 0.15f), Quaternion.Euler(0, 90, 0), vehiclesRoot.transform, "Vehicle_MainRoad_1");
+        SpawnModel(CarPath + "taxi.fbx", new Vector3(4.0f, 0f, 0.15f), Quaternion.Euler(0, 270, 0), vehiclesRoot.transform, "Vehicle_MainRoad_2");
+
+        // Delivery van near the commercial hub, giving it some life
+        SpawnModel(CarPath + "delivery.fbx", new Vector3(-3.3f, 0f, 4.4f), Quaternion.Euler(0, 90, 0), vehiclesRoot.transform, "Vehicle_DeliveryVan");
+
+        ApplyVehicleScale(vehiclesRoot);
+
+        // Collide like the rest of the environment (see GenerateScene's equivalent pass)
+        var vehicleMeshFilters = vehiclesRoot.GetComponentsInChildren<MeshFilter>();
+        foreach (var mf in vehicleMeshFilters)
+        {
+            if (mf.GetComponent<Collider>() == null)
+            {
+                MeshCollider mc = mf.gameObject.AddComponent<MeshCollider>();
+                mc.sharedMesh = mf.sharedMesh;
+            }
+        }
+
+        EditorSceneManager.MarkSceneDirty(activeScene);
+        EditorSceneManager.SaveScene(activeScene);
+
+        Debug.Log($"[MaliGoWorldGenerator] Added 5 parked vehicles (scale x{VehicleScale}) to MaliGoWorld and saved the scene. Positions are a first pass - nudge in the Editor if anything clips.");
+    }
+
+    /// <summary>
+    /// Restyles the HUD_StatusPanel and Goal_Panel already baked into the current scene,
+    /// swapping their flat-colour backgrounds for the Kenney UI Adventure panel art. Purely
+    /// additive/in-place - does not touch the Text hierarchy HUDController binds to, so it's
+    /// safe to run against the existing scene without regenerating anything.
+    /// </summary>
+    [MenuItem("MaliGo/World/Restyle HUD")]
+    public static void RestyleHud()
+    {
+        Scene activeScene = EditorSceneManager.GetActiveScene();
+        if (activeScene.name != "MaliGoWorld")
+        {
+            Debug.LogWarning("[MaliGoWorldGenerator] Open MaliGoWorld.unity before running Restyle HUD.");
+            return;
+        }
+
+        GameObject hudPanel = GameObject.Find("HUD_StatusPanel");
+        GameObject goalPanel = GameObject.Find("Goal_Panel");
+        if (hudPanel == null && goalPanel == null)
+        {
+            Debug.LogWarning("[MaliGoWorldGenerator] Neither HUD_StatusPanel nor Goal_Panel found in the open scene.");
+            return;
+        }
+
+        Sprite panelSprite = MaliGo.UI.KenneyUiSprites.PanelStatus;
+        if (panelSprite == null)
+        {
+            Debug.LogWarning("[MaliGoWorldGenerator] Could not load panel_grey_green - is the UI Adventure pack still in Assets/kenney_ui-pack-adventure?");
+            return;
+        }
+
+        Color statusText = new Color(0.059f, 0.20f, 0.12f);
+
+        RestylePanel(hudPanel, panelSprite, statusText);
+        RestylePanel(goalPanel, panelSprite, statusText);
+
+        EditorSceneManager.MarkSceneDirty(activeScene);
+        EditorSceneManager.SaveScene(activeScene);
+        Debug.Log("[MaliGoWorldGenerator] Restyled HUD panels and saved the scene.");
+    }
+
+    private static void RestylePanel(GameObject panel, Sprite panelSprite, Color textColor)
+    {
+        if (panel == null)
+        {
+            return;
+        }
+
+        Image panelImage = panel.GetComponent<Image>();
+        if (panelImage != null)
+        {
+            panelImage.sprite = panelSprite;
+            panelImage.type = Image.Type.Sliced;
+            panelImage.color = Color.white;
+        }
+
+        foreach (Text text in panel.GetComponentsInChildren<Text>(true))
+        {
+            text.color = textColor;
+        }
+    }
+
+    private static void ApplyVehicleScale(GameObject vehiclesRoot)
+    {
+        foreach (Transform child in vehiclesRoot.transform)
+        {
+            child.localScale = Vector3.one * VehicleScale;
+        }
+    }
+
     private static GameObject SpawnModel(string path, Vector3 pos, Quaternion rot, Transform parent, string name)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -357,6 +505,10 @@ public class MaliGoWorldGenerator
         Font defaultFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         if (defaultFont == null) defaultFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
+        // Kenney UI Adventure's panel_grey_green fill is light blue-grey, so HUD text
+        // needs a dark colour here rather than the cream/sage tuned for the old flat-green panel.
+        Color statusText = new Color(0.059f, 0.20f, 0.12f);
+
         // Top Left Status Panel
         GameObject hudPanel = new GameObject("HUD_StatusPanel");
         hudPanel.transform.SetParent(canvasObj.transform, false);
@@ -368,9 +520,18 @@ public class MaliGoWorldGenerator
         hudRect.sizeDelta = new Vector2(300, 170);
 
         Image hudBg = hudPanel.AddComponent<Image>();
-        hudBg.color = new Color(mossGreen.r, mossGreen.g, mossGreen.b, 0.92f);
+        Sprite hudPanelSprite = MaliGo.UI.KenneyUiSprites.PanelStatus;
+        if (hudPanelSprite != null)
+        {
+            hudBg.sprite = hudPanelSprite;
+            hudBg.type = Image.Type.Sliced;
+        }
+        else
+        {
+            hudBg.color = new Color(mossGreen.r, mossGreen.g, mossGreen.b, 0.92f);
+        }
 
-        CreateText(hudPanel, "Player: You | Level 1", new Vector2(16, -14), 20, cream, FontStyle.Bold, defaultFont);
+        CreateText(hudPanel, "Player: You | Level 1", new Vector2(16, -14), 20, statusText, FontStyle.Bold, defaultFont);
 
         // XP Bar
         GameObject xpBg = new GameObject("XP_Bar_Bg");
@@ -392,9 +553,9 @@ public class MaliGoWorldGenerator
         xpFillRect.offsetMax = Vector2.zero;
         xpFill.AddComponent<Image>().color = goldenAmber;
 
-        CreateText(hudPanel, "💰 Cash: R0", new Vector2(16, -64), 18, cream, FontStyle.Normal, defaultFont);
-        CreateText(hudPanel, "🏦 Savings: R0", new Vector2(16, -96), 18, sage, FontStyle.Normal, defaultFont);
-        CreateText(hudPanel, "🌱 Financial Stress: 0%", new Vector2(16, -128), 18, cream, FontStyle.Normal, defaultFont);
+        CreateText(hudPanel, "💰 Cash: R0", new Vector2(16, -64), 18, statusText, FontStyle.Normal, defaultFont);
+        CreateText(hudPanel, "🏦 Savings: R0", new Vector2(16, -96), 18, statusText, FontStyle.Normal, defaultFont);
+        CreateText(hudPanel, "🌱 Financial Stress: 0%", new Vector2(16, -128), 18, statusText, FontStyle.Normal, defaultFont);
 
         // Top Right Goal Panel
         GameObject goalBox = new GameObject("Goal_Panel");
@@ -407,10 +568,19 @@ public class MaliGoWorldGenerator
         goalRect.sizeDelta = new Vector2(280, 110);
 
         Image goalBg = goalBox.AddComponent<Image>();
-        goalBg.color = new Color(mossGreen.r, mossGreen.g, mossGreen.b, 0.92f);
+        Sprite goalPanelSprite = MaliGo.UI.KenneyUiSprites.PanelStatus;
+        if (goalPanelSprite != null)
+        {
+            goalBg.sprite = goalPanelSprite;
+            goalBg.type = Image.Type.Sliced;
+        }
+        else
+        {
+            goalBg.color = new Color(mossGreen.r, mossGreen.g, mossGreen.b, 0.92f);
+        }
 
-        CreateText(goalBox, "Today's Financial Goal:", new Vector2(16, -16), 18, sage, FontStyle.Bold, defaultFont);
-        CreateText(goalBox, "Set your daily goal", new Vector2(16, -50), 24, goldenAmber, FontStyle.Bold, defaultFont);
+        CreateText(goalBox, "Today's Financial Goal:", new Vector2(16, -16), 18, statusText, FontStyle.Bold, defaultFont);
+        CreateText(goalBox, "Goal: Set your daily goal", new Vector2(16, -50), 22, new Color(0.62f, 0.38f, 0.06f), FontStyle.Bold, defaultFont);
     }
 
     private static void CreateText(GameObject parent, string content, Vector2 pos, int fontSize, Color color, FontStyle style, Font font)

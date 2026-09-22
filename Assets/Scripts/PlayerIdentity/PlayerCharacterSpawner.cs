@@ -13,9 +13,20 @@ namespace MaliGo.PlayerIdentity
         const string MaliObjectName = "Mali";
         const string SpawnPointName = "PlayerSpawnPoint";
 
+        /// <summary>
+        /// characterMedium.fbx imports at ~3.96 world-unit height, but MaliGoWorld's Kenney
+        /// City Kit environment uses a compact scale (measured: Player_House ~0.83 units,
+        /// a garden fence ~0.27 units - both consistent with ~0.27 units per real metre).
+        /// At that ratio a ~1.75m person should measure ~0.47 units, giving this factor
+        /// (0.47 / 3.96). See Assets/Editor/MaliGoScaleAudit.cs for the measurement tool.
+        /// </summary>
+        const float CharacterModelScale = 0.12f;
+        const float ControllerHeight = 0.47f;
+        const float ControllerRadius = 0.09f;
+
         [SerializeField] PlayerCharacterCatalog catalog;
         [SerializeField] GameObject playerCharacterPrefab;
-        [SerializeField] Vector3 maliOffsetFromPlayer = new Vector3(1.2f, 0f, -0.8f);
+        [SerializeField] Vector3 maliOffsetFromPlayer = new Vector3(0.32f, 0f, -0.22f);
 
         public PlayerCharacterCatalog Catalog => catalog;
 
@@ -169,11 +180,11 @@ namespace MaliGo.PlayerIdentity
             playerRoot.transform.position = spawnPosition;
 
             CharacterController controller = playerRoot.AddComponent<CharacterController>();
-            controller.height = 1.75f;
-            controller.radius = 0.35f;
-            controller.center = new Vector3(0f, 0.875f, 0f);
+            controller.height = ControllerHeight;
+            controller.radius = ControllerRadius;
+            controller.center = new Vector3(0f, ControllerHeight * 0.5f, 0f);
             controller.slopeLimit = 45f;
-            controller.stepOffset = 0.25f;
+            controller.stepOffset = ControllerHeight * 0.14f;
 
             Rigidbody rigidbody = playerRoot.AddComponent<Rigidbody>();
             rigidbody.isKinematic = true;
@@ -185,6 +196,7 @@ namespace MaliGo.PlayerIdentity
             GameObject modelInstance = Instantiate(catalog.characterModelPrefab, visualRoot.transform);
             modelInstance.transform.localPosition = Vector3.zero;
             modelInstance.transform.localRotation = Quaternion.identity;
+            modelInstance.transform.localScale = Vector3.one * CharacterModelScale;
 
             Animator animator = modelInstance.GetComponentInChildren<Animator>();
             if (animator == null)
@@ -272,6 +284,7 @@ namespace MaliGo.PlayerIdentity
 
             MaliNpcController maliNpc = mali.GetComponent<MaliNpcController>();
             maliNpc?.RefreshPlayerReference();
+            maliNpc?.SetFollowPlayer(true);
         }
 
         static void EnsureMaliCompanionComponents(GameObject maliObject)

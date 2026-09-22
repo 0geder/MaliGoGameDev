@@ -73,12 +73,7 @@ namespace MaliGo.PlayerIdentity
             CreateButton(panel.transform, "BackButton", new Vector2(24f, 24f), new Vector2(140f, 48f), "Back", Sage, OnBackClicked);
             nextButton = CreateButton(panel.transform, "NextButton", new Vector2(656f, 24f), new Vector2(140f, 48f), "Next", GoldenAmber, OnNextClicked);
 
-            if (FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
-            {
-                var eventSystem = new GameObject("EventSystem");
-                eventSystem.AddComponent<UnityEngine.EventSystems.EventSystem>();
-                eventSystem.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-            }
+            MaliGo.UI.EventSystemUtility.EnsureEventSystem();
         }
 
         void ShowStep(int step)
